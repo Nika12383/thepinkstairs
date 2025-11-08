@@ -15,8 +15,17 @@ type StatCardProps = {
 
 function StatCard({ label, target, prefix = "", suffix = "+" }: StatCardProps) {
   const [value, setValue] = useState(0);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  // 👀 only true when the card is actually in view
+  const isInView = useInView(ref, {
+    once: true,        // animate only the first time it appears
+    margin: "-50px",   // start a bit before it's fully centered
+  });
 
   useEffect(() => {
+    if (!isInView) return; // don't animate until visible
+
     let frame: number;
     const duration = 1500;
     const start = performance.now();
@@ -29,12 +38,13 @@ function StatCard({ label, target, prefix = "", suffix = "+" }: StatCardProps) {
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [target]);
+  }, [isInView, target]);
 
   const formatted = new Intl.NumberFormat("en-US").format(value);
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -51,6 +61,7 @@ function StatCard({ label, target, prefix = "", suffix = "+" }: StatCardProps) {
     </motion.div>
   );
 }
+
 
 
 
@@ -176,9 +187,8 @@ export default function HomePage() {
     {/* This is where your new grid line goes */}
     <div className="grid gap-10 sm:gap-12 md:gap-14 lg:gap-16 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 justify-items-center">
       <div className="lg:mr-10">
-  <StatCard target={8400000} label="girls reached" />
-</div>
-
+        <StatCard target={8400000} label="girls reached" />
+      </div>
       <StatCard target={250} label="volunteers" />
       <StatCard target={15000} label="volunteer hours" />
       <StatCard target={821} label="donations" />
